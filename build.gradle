@@ -25,7 +25,8 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.kafka:spring-kafka:3.3.1' // 라이브러리 추가
+    implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '3.3.1', classifier: 'sources' // 소스 코드 추가
     implementation 'org.springframework.boot:spring-boot-starter-web'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
