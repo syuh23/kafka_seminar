@@ -39,7 +39,6 @@ out/
 .gitattributes
 .env
 docker-compose.yml
-HELP.md
 gradlew.bat
 gradlew
 build.gradle
