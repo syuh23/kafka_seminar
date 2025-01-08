@@ -1,17 +1,21 @@
 package org.example.serverseminar;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
 public class ServerseminarApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ServerseminarApplication.class, args);
-        // 여기서 코드 쳐보면서 한번 시작점을 찾아보려고 했음
-        KafkaProducer<?, ?> kafkaProducer;
-        KafkaTemplate<?, ?> kafkaTemplate;
+
+        // 최종적으로 등록된 빈
+        ApplicationContext context = SpringApplication.run(ServerseminarApplication.class, args);
+
+        System.out.println("\n\nSpring Context에 등록된 빈 이름 출력");
+        for (String beanName : context.getBeanDefinitionNames()) {
+            System.out.println(beanName);
+        }
     }
 }
