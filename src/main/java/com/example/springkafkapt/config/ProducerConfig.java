@@ -1,69 +1,77 @@
-//package com.example.springkafkapt;
-//
-//import com.example.springkafkapt.customkafka.PropertiesKafkaConnectionDetailsCustom;
-//import org.apache.kafka.clients.consumer.ConsumerConfig;
-//import org.apache.kafka.clients.producer.ProducerConfig;
-//import org.apache.kafka.common.serialization.StringDeserializer;
-//import org.apache.kafka.common.serialization.StringSerializer;
-//import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-//import org.springframework.boot.autoconfigure.kafka.KafkaConnectionDetails;
-//import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.context.annotation.Profile;
-//import org.springframework.kafka.annotation.EnableKafka;
-//import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-//import org.springframework.kafka.core.*;
-//
-//import java.util.HashMap;
-//import java.util.Map;
-//
-//@Configuration
-//@EnableKafka
-//public class KafkaConfig {
-//
-////    @Bean
-////    @ConditionalOnMissingBean({KafkaConnectionDetails.class})
-////    PropertiesKafkaConnectionDetailsCustom kafkaConnectionDetails(KafkaProperties properties) {
-////        return new PropertiesKafkaConnectionDetailsCustom(properties);
-////    }
-//
-//    // 프로듀서 설정
-//    @Bean
-//    @Profile("producer")
-//    public ProducerFactory<String, String> producerFactory() {
-//        Map<String, Object> configProps = new HashMap<>();
-//        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-//        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-//        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-//        return new DefaultKafkaProducerFactory<>(configProps);
-//    }
-//
-//    @Bean
-//    @Profile("producer")
-//    public KafkaTemplate<String, String> kafkaTemplate() {
-//        return new KafkaTemplate<>(producerFactory());
-//    }
-//
-//    // 컨슈머 설정
-//    @Bean
-//    @Profile({"consumer-one", "consumer-two"})
-//    public ConsumerFactory<String, String> consumerFactory() {
-//        Map<String, Object> configProps = new HashMap<>();
-//        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-//        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test");
-//        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//        return new DefaultKafkaConsumerFactory<>(configProps);
-//    }
-//
-//    @Bean
-//    @Profile({"consumer1", "consumer2"})
-//    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-//        ConcurrentKafkaListenerContainerFactory<String, String> factory =
-//                new ConcurrentKafkaListenerContainerFactory<>();
-//        factory.setConsumerFactory(consumerFactory());
-//        return factory;
-//    }
-//
-//}
+package com.example.springkafkapt.config;
+
+import com.example.springkafkapt.custom.PropertiesKafkaConnectionDetailsCustom;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.kafka.DefaultKafkaProducerFactoryCustomizer;
+import org.springframework.boot.autoconfigure.kafka.KafkaConnectionDetails;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.ssl.SslBundles;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.LoggingProducerListener;
+import org.springframework.kafka.support.ProducerListener;
+import org.springframework.kafka.transaction.KafkaTransactionManager;
+
+import java.util.Map;
+
+@Configuration
+@ConditionalOnClass({KafkaTemplate.class})
+@EnableConfigurationProperties({KafkaProperties.class})
+@Profile("producer")
+public class ProducerConfig {
+    private final KafkaProperties properties;
+
+    public ProducerConfig(KafkaProperties kafkaProperties) {
+        this.properties = kafkaProperties;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean({ProducerFactory.class})
+    public DefaultKafkaProducerFactory<?, ?> kafkaProducerFactory(KafkaConnectionDetails connectionDetails, ObjectProvider<DefaultKafkaProducerFactoryCustomizer> customizers, ObjectProvider<SslBundles> sslBundles) {
+        Map<String, Object> properties = this.properties.buildProducerProperties(sslBundles.getIfAvailable());
+        this.applyKafkaConnectionDetailsForProducer(properties, connectionDetails);
+        DefaultKafkaProducerFactory<?, ?> factory = new DefaultKafkaProducerFactory(properties);
+        String transactionIdPrefix = this.properties.getProducer().getTransactionIdPrefix();
+        if (transactionIdPrefix != null) {
+            factory.setTransactionIdPrefix(transactionIdPrefix);
+        }
+
+        customizers.orderedStream().forEach((customizer) -> customizer.customize(factory));
+        return factory;
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
+        KafkaTemplate<String, String> kafkaTemplate = new KafkaTemplate<>(producerFactory);
+        return kafkaTemplate;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean({ProducerListener.class})
+    public LoggingProducerListener<Object, Object> kafkaProducerListener() {
+        return new LoggingProducerListener();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = {"spring.kafka.producer.transaction-id-prefix"})
+    @ConditionalOnMissingBean
+    public KafkaTransactionManager<?, ?> kafkaTransactionManager(ProducerFactory<?, ?> producerFactory) {
+        return new KafkaTransactionManager(producerFactory);
+    }
+
+    private void applyKafkaConnectionDetailsForProducer(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
+        properties.put("bootstrap.servers", connectionDetails.getProducerBootstrapServers());
+        if (!(connectionDetails instanceof PropertiesKafkaConnectionDetailsCustom)) {
+            properties.put("security.protocol", "PLAINTEXT");
+        }
+    }
+
+}

@@ -51,64 +51,6 @@ public class KafkaAutoConfigurationCustom {
         return new PropertiesKafkaConnectionDetailsCustom(properties);
     }
 
-//    @Bean
-//    //@ConditionalOnMissingBean({KafkaTemplate.class})
-//    public KafkaTemplate<?, ?> kafkaTemplate(ProducerFactory<Object, Object> kafkaProducerFactory, ProducerListener<Object, Object> kafkaProducerListener, ObjectProvider<RecordMessageConverter> messageConverter) {
-//        PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-//        KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate<>(kafkaProducerFactory);
-//        messageConverter.ifUnique(kafkaTemplate::setMessageConverter);
-//        map.from(kafkaProducerListener).to(kafkaTemplate::setProducerListener);
-//        map.from(this.properties.getTemplate().getDefaultTopic()).to(kafkaTemplate::setDefaultTopic);
-//        map.from(this.properties.getTemplate().getTransactionIdPrefix()).to(kafkaTemplate::setTransactionIdPrefix);
-//        map.from(this.properties.getTemplate().isObservationEnabled()).to(kafkaTemplate::setObservationEnabled);
-//        return kafkaTemplate;
-//    }
-
-    @Bean
-    public KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
-        KafkaTemplate<String, String> kafkaTemplate = new KafkaTemplate<>(producerFactory);
-        return kafkaTemplate;
-    }
-
-
-    @Bean
-    @ConditionalOnMissingBean({ProducerListener.class})
-    public LoggingProducerListener<Object, Object> kafkaProducerListener() {
-        return new LoggingProducerListener();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean({ConsumerFactory.class})
-    public DefaultKafkaConsumerFactory<?, ?> kafkaConsumerFactory(KafkaConnectionDetails connectionDetails, ObjectProvider<DefaultKafkaConsumerFactoryCustomizer> customizers, ObjectProvider<SslBundles> sslBundles) {
-        Map<String, Object> properties = this.properties.buildConsumerProperties((SslBundles)sslBundles.getIfAvailable());
-        this.applyKafkaConnectionDetailsForConsumer(properties, connectionDetails);
-        DefaultKafkaConsumerFactory<Object, Object> factory = new DefaultKafkaConsumerFactory(properties);
-        customizers.orderedStream().forEach((customizer) -> customizer.customize(factory));
-        return factory;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean({ProducerFactory.class})
-    public DefaultKafkaProducerFactory<?, ?> kafkaProducerFactory(KafkaConnectionDetails connectionDetails, ObjectProvider<DefaultKafkaProducerFactoryCustomizer> customizers, ObjectProvider<SslBundles> sslBundles) {
-        Map<String, Object> properties = this.properties.buildProducerProperties((SslBundles)sslBundles.getIfAvailable());
-        this.applyKafkaConnectionDetailsForProducer(properties, connectionDetails);
-        DefaultKafkaProducerFactory<?, ?> factory = new DefaultKafkaProducerFactory(properties);
-        String transactionIdPrefix = this.properties.getProducer().getTransactionIdPrefix();
-        if (transactionIdPrefix != null) {
-            factory.setTransactionIdPrefix(transactionIdPrefix);
-        }
-
-        customizers.orderedStream().forEach((customizer) -> customizer.customize(factory));
-        return factory;
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = {"spring.kafka.producer.transaction-id-prefix"})
-    @ConditionalOnMissingBean
-    public KafkaTransactionManager<?, ?> kafkaTransactionManager(ProducerFactory<?, ?> producerFactory) {
-        return new KafkaTransactionManager(producerFactory);
-    }
-
     @Bean
     @ConditionalOnProperty(name = {"spring.kafka.jaas.enabled"})
     @ConditionalOnMissingBean
@@ -156,20 +98,6 @@ public class KafkaAutoConfigurationCustom {
         RetryTopicConfigurationBuilder builder = RetryTopicConfigurationBuilder.newInstance().maxAttempts(retryTopic.getAttempts()).useSingleTopicForSameIntervals().suffixTopicsWithIndexValues().doNotAutoCreateRetryTopics();
         setBackOffPolicy(builder, retryTopic.getBackoff());
         return builder.create(kafkaTemplate);
-    }
-
-    private void applyKafkaConnectionDetailsForConsumer(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
-        properties.put("bootstrap.servers", connectionDetails.getConsumerBootstrapServers());
-        if (!(connectionDetails instanceof PropertiesKafkaConnectionDetailsCustom)) {
-            properties.put("security.protocol", "PLAINTEXT");
-        }
-    }
-
-    private void applyKafkaConnectionDetailsForProducer(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
-        properties.put("bootstrap.servers", connectionDetails.getProducerBootstrapServers());
-        if (!(connectionDetails instanceof PropertiesKafkaConnectionDetailsCustom)) {
-            properties.put("security.protocol", "PLAINTEXT");
-        }
     }
 
     private void applyKafkaConnectionDetailsForAdmin(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
