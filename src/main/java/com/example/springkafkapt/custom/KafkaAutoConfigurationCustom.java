@@ -19,27 +19,20 @@ import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.retrytopic.RetryTopicConfiguration;
 import org.springframework.kafka.retrytopic.RetryTopicConfigurationBuilder;
 import org.springframework.kafka.security.jaas.KafkaJaasLoginModuleInitializer;
-import org.springframework.kafka.support.LoggingProducerListener;
-import org.springframework.kafka.support.ProducerListener;
-import org.springframework.kafka.transaction.KafkaTransactionManager;
 import org.springframework.retry.backoff.BackOffPolicyBuilder;
 import org.springframework.retry.backoff.SleepingBackOffPolicy;
 
 @Configuration
 @ConditionalOnClass({KafkaTemplate.class})
 @EnableConfigurationProperties({KafkaProperties.class})
-@Import({KafkaAnnotationDrivenConfigurationCustom.class, KafkaStreamsAnnotationDrivenConfigurationCustom.class})  // 이 클래스들에 대한 빈 설정을 먼저 해줘야하기 때문에 이 클래스를 추가적으로 만듦
+@Import({KafkaAnnotationDrivenConfigurationCustom.class, KafkaStreamsAnnotationDrivenConfigurationCustom.class})
 public class KafkaAutoConfigurationCustom {
-    private KafkaProperties properties;
+    private final KafkaProperties properties;
 
     KafkaAutoConfigurationCustom(KafkaProperties properties) {
         this.properties = properties;
@@ -60,11 +53,9 @@ public class KafkaAutoConfigurationCustom {
         if (jaasProperties.getControlFlag() != null) {
             jaas.setControlFlag(jaasProperties.getControlFlag());
         }
-
         if (jaasProperties.getLoginModule() != null) {
             jaas.setLoginModule(jaasProperties.getLoginModule());
         }
-
         jaas.setOptions(jaasProperties.getOptions());
         return jaas;
     }
@@ -72,18 +63,16 @@ public class KafkaAutoConfigurationCustom {
     @Bean
     @ConditionalOnMissingBean
     public KafkaAdmin kafkaAdmin(KafkaConnectionDetails connectionDetails, ObjectProvider<SslBundles> sslBundles) {
-        Map<String, Object> properties = this.properties.buildAdminProperties((SslBundles)sslBundles.getIfAvailable());
+        Map<String, Object> properties = this.properties.buildAdminProperties(sslBundles.getIfAvailable());
         this.applyKafkaConnectionDetailsForAdmin(properties, connectionDetails);
         KafkaAdmin kafkaAdmin = new KafkaAdmin(properties);
         KafkaProperties.Admin admin = this.properties.getAdmin();
         if (admin.getCloseTimeout() != null) {
             kafkaAdmin.setCloseTimeout((int)admin.getCloseTimeout().getSeconds());
         }
-
         if (admin.getOperationTimeout() != null) {
             kafkaAdmin.setOperationTimeout((int)admin.getOperationTimeout().getSeconds());
         }
-
         kafkaAdmin.setFatalIfBrokerNotAvailable(admin.isFailFast());
         kafkaAdmin.setModifyTopicConfigs(admin.isModifyTopicConfigs());
         kafkaAdmin.setAutoCreate(admin.isAutoCreate());

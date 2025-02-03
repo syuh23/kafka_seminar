@@ -31,8 +31,10 @@ public class ConsumerConfig {
 
     @Bean
     @ConditionalOnMissingBean({ConsumerFactory.class})
-    public DefaultKafkaConsumerFactory<?, ?> kafkaConsumerFactory(KafkaConnectionDetails connectionDetails, ObjectProvider<DefaultKafkaConsumerFactoryCustomizer> customizers, ObjectProvider<SslBundles> sslBundles) {
-        Map<String, Object> properties = this.properties.buildConsumerProperties((SslBundles)sslBundles.getIfAvailable());
+    public DefaultKafkaConsumerFactory<?, ?> kafkaConsumerFactory(KafkaConnectionDetails connectionDetails,
+                                                                  ObjectProvider<DefaultKafkaConsumerFactoryCustomizer> customizers,
+                                                                  ObjectProvider<SslBundles> sslBundles) {
+        Map<String, Object> properties = this.properties.buildConsumerProperties(sslBundles.getIfAvailable());
         this.applyKafkaConnectionDetailsForConsumer(properties, connectionDetails);
         DefaultKafkaConsumerFactory<Object, Object> factory = new DefaultKafkaConsumerFactory(properties);
         customizers.orderedStream().forEach((customizer) -> customizer.customize(factory));
@@ -40,7 +42,7 @@ public class ConsumerConfig {
     }
 
     private void applyKafkaConnectionDetailsForConsumer(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
-        properties.put("bootstrap.servers", connectionDetails.getConsumerBootstrapServers());
+        properties.putIfAbsent("bootstrap.servers", connectionDetails.getConsumerBootstrapServers());
         if (!(connectionDetails instanceof PropertiesKafkaConnectionDetailsCustom)) {
             properties.put("security.protocol", "PLAINTEXT");
         }

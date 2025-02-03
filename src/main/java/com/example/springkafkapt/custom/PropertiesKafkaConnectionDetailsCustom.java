@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 
 import java.util.List;
 
-// KafkaProperties를 기반으로 Kafka 연결 설정을 한 곳에서 관리, 연결 세부 정보를 제공하는 클래스 (중간 어댑터 역할)
 public class PropertiesKafkaConnectionDetailsCustom implements KafkaConnectionDetails {
     private final KafkaProperties properties;
 

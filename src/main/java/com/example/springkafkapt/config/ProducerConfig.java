@@ -35,7 +35,9 @@ public class ProducerConfig {
 
     @Bean
     @ConditionalOnMissingBean({ProducerFactory.class})
-    public DefaultKafkaProducerFactory<?, ?> kafkaProducerFactory(KafkaConnectionDetails connectionDetails, ObjectProvider<DefaultKafkaProducerFactoryCustomizer> customizers, ObjectProvider<SslBundles> sslBundles) {
+    public DefaultKafkaProducerFactory<?, ?> kafkaProducerFactory(KafkaConnectionDetails connectionDetails,
+                                                                  ObjectProvider<DefaultKafkaProducerFactoryCustomizer> customizers,
+                                                                  ObjectProvider<SslBundles> sslBundles) {
         Map<String, Object> properties = this.properties.buildProducerProperties(sslBundles.getIfAvailable());
         this.applyKafkaConnectionDetailsForProducer(properties, connectionDetails);
         DefaultKafkaProducerFactory<?, ?> factory = new DefaultKafkaProducerFactory(properties);
@@ -43,7 +45,6 @@ public class ProducerConfig {
         if (transactionIdPrefix != null) {
             factory.setTransactionIdPrefix(transactionIdPrefix);
         }
-
         customizers.orderedStream().forEach((customizer) -> customizer.customize(factory));
         return factory;
     }
@@ -68,7 +69,7 @@ public class ProducerConfig {
     }
 
     private void applyKafkaConnectionDetailsForProducer(Map<String, Object> properties, KafkaConnectionDetails connectionDetails) {
-        properties.put("bootstrap.servers", connectionDetails.getProducerBootstrapServers());
+        properties.putIfAbsent("bootstrap.servers", connectionDetails.getProducerBootstrapServers());
         if (!(connectionDetails instanceof PropertiesKafkaConnectionDetailsCustom)) {
             properties.put("security.protocol", "PLAINTEXT");
         }
