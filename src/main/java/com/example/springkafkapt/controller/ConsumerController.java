@@ -1,27 +1,30 @@
 package com.example.springkafkapt.controller;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@Profile({"consumer-one", "consumer-two"})
+@Profile({"consumer", "consumer-two"})
+@RequestMapping("/consumer")
 public class ConsumerController {
-    private final List<String> messages = new ArrayList<>();
 
-    @KafkaListener(topics = "test-topic", groupId = "kafka-test")
-    public void listen(String message) {
-        System.out.println("디버깅 확인용 메시지 : " + message);
-        messages.add(message);
+    private final ConsumerService consumerService;
+
+    public ConsumerController(ConsumerService consumerService) {
+        this.consumerService = consumerService;
     }
 
-    @GetMapping("/get")
-    public List<String> getMessages() {
-        System.out.println("Received messages: " + messages);
-        return messages;
+    @PostMapping("/create")
+    public String createConsumer(@RequestParam String topic, @RequestParam String groupId) {
+        consumerService.createConsumer(topic, groupId);
+        return "Consumer created Successful";
     }
+
+    @GetMapping("/messages")
+    public List<String> getAllMessages() {
+        return consumerService.getAllMessages();
+    }
+
 }

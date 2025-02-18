@@ -1,12 +1,26 @@
-//package com.example.springkafkapt.studycode;
+//package com.example.springkafkapt.studycode;/*
+// * Copyright 2012-2023 the original author or authors.
+// *
+// * Licensed under the Apache License, Version 2.0 (the "License");
+// * you may not use this file except in compliance with the License.
+// * You may obtain a copy of the License at
+// *
+// *      https://www.apache.org/licenses/LICENSE-2.0
+// *
+// * Unless required by applicable law or agreed to in writing, software
+// * distributed under the License is distributed on an "AS IS" BASIS,
+// * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// * See the License for the specific language governing permissions and
+// * limitations under the License.
+// */
 //
 //import java.util.function.Function;
 //
-//import com.example.springkafkapt.custom.ConcurrentKafkaListenerContainerFactoryConfigurerCustom;
 //import org.springframework.beans.factory.ObjectProvider;
 //import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 //import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 //import org.springframework.boot.autoconfigure.condition.ConditionalOnThreading;
+//import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 //import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 //import org.springframework.boot.autoconfigure.thread.Threading;
 //import org.springframework.boot.ssl.SslBundles;
@@ -33,40 +47,58 @@
 //import org.springframework.kafka.support.converter.RecordMessageConverter;
 //import org.springframework.kafka.transaction.KafkaAwareTransactionManager;
 //
-//@Configuration(proxyBeanMethods = false) // 스프링 설정 클래스 (proxyBeanMethods : 프록시를 사용하지 않아 메모리를 아낄 수 있도록 최적화한 설정)
-//@ConditionalOnClass({EnableKafka.class}) // EnableKafka 클래스가 클래스패스에 존재할 때만 이 설정이 적용됨. 즉, Kafka 관련 의존성이 추가되지 않았다면 이 클래스 무시
-//        // 클래스패스?? 애플리케이션이 실행될 때 사용할 수 있는 클래스 파일과 리소스 파일의 경로 목록 (내 프로젝트 패키지 + 외부 라이브러리까지 모두 포함)
-//        // 즉, ConditionalOnClass({EnableKafka.class}) => 스프링 카프카 의존성이 프로젝트에 포함되었는가? 를 확인하는 조건 !!!
+///**
+// * Configuration for Kafka annotation-driven support.
+// *
+// * @author Gary Russell
+// * @author Eddú Meléndez
+// * @author Thomas Kåsene
+// * @author Moritz Halbritter
+// * @author Andy Wilkinson
+// * @author Scott Frederick
+// */
+//@Configuration(proxyBeanMethods = false)
+//@ConditionalOnClass(EnableKafka.class)
 //class KafkaAnnotationDrivenConfigurationStudy {
+//
 //    private final KafkaProperties properties;
+//
 //    private final RecordMessageConverter recordMessageConverter;
+//
 //    private final RecordFilterStrategy<Object, Object> recordFilterStrategy;
+//
 //    private final BatchMessageConverter batchMessageConverter;
+//
 //    private final KafkaTemplate<Object, Object> kafkaTemplate;
+//
 //    private final KafkaAwareTransactionManager<Object, Object> transactionManager;
+//
 //    private final ConsumerAwareRebalanceListener rebalanceListener;
+//
 //    private final CommonErrorHandler commonErrorHandler;
+//
 //    private final AfterRollbackProcessor<Object, Object> afterRollbackProcessor;
+//
 //    private final RecordInterceptor<Object, Object> recordInterceptor;
+//
 //    private final BatchInterceptor<Object, Object> batchInterceptor;
+//
 //    private final Function<MessageListenerContainer, String> threadNameSupplier;
 //
 //    KafkaAnnotationDrivenConfigurationStudy(KafkaProperties properties,
-//                                             ObjectProvider<RecordMessageConverter> recordMessageConverter,
-//                                             ObjectProvider<RecordFilterStrategy<Object, Object>> recordFilterStrategy,
-//                                             ObjectProvider<BatchMessageConverter> batchMessageConverter,
-//                                             ObjectProvider<KafkaTemplate<Object, Object>> kafkaTemplate,
-//                                             ObjectProvider<KafkaAwareTransactionManager<Object, Object>> kafkaTransactionManager,
-//                                             ObjectProvider<ConsumerAwareRebalanceListener> rebalanceListener,
-//                                             ObjectProvider<CommonErrorHandler> commonErrorHandler,
-//                                             ObjectProvider<AfterRollbackProcessor<Object, Object>> afterRollbackProcessor,
-//                                             ObjectProvider<RecordInterceptor<Object, Object>> recordInterceptor,
-//                                             ObjectProvider<BatchInterceptor<Object, Object>> batchInterceptor,
-//                                             ObjectProvider<Function<MessageListenerContainer, String>> threadNameSupplier) {
-//        // 매개변수의 ObjectProvider : 스프링에서 제공하는 지연 로딩 도구, 실제로 필요한 시점에 빈을 가져올 수 있게 해줌
-//        // 아래의 .getIfUnique() : 특정 빈이 유일하게 존재할 경우만 가져오도록 함 (유일하게 존재할 경우?? = 해당 타입의 빈이 하나만 존재할 경우)
-//        this.properties = properties; // application.properties에 작성된 Kafka 관련 설정 관리
-//        this.recordMessageConverter = recordMessageConverter.getIfUnique(); // Kafka 메시지를 변환
+//                                       ObjectProvider<RecordMessageConverter> recordMessageConverter,
+//                                       ObjectProvider<RecordFilterStrategy<Object, Object>> recordFilterStrategy,
+//                                       ObjectProvider<BatchMessageConverter> batchMessageConverter,
+//                                       ObjectProvider<KafkaTemplate<Object, Object>> kafkaTemplate,
+//                                       ObjectProvider<KafkaAwareTransactionManager<Object, Object>> kafkaTransactionManager,
+//                                       ObjectProvider<ConsumerAwareRebalanceListener> rebalanceListener,
+//                                       ObjectProvider<CommonErrorHandler> commonErrorHandler,
+//                                       ObjectProvider<AfterRollbackProcessor<Object, Object>> afterRollbackProcessor,
+//                                       ObjectProvider<RecordInterceptor<Object, Object>> recordInterceptor,
+//                                       ObjectProvider<BatchInterceptor<Object, Object>> batchInterceptor,
+//                                       ObjectProvider<Function<MessageListenerContainer, String>> threadNameSupplier) {
+//        this.properties = properties;
+//        this.recordMessageConverter = recordMessageConverter.getIfUnique();
 //        this.recordFilterStrategy = recordFilterStrategy.getIfUnique();
 //        this.batchMessageConverter = batchMessageConverter
 //                .getIfUnique(() -> new BatchMessagingMessageConverter(this.recordMessageConverter));
@@ -80,28 +112,26 @@
 //        this.threadNameSupplier = threadNameSupplier.getIfUnique();
 //    }
 //
-//    @Bean // 해당 메서드가 반환하는 객체를 빈으로 등록
-//    @ConditionalOnMissingBean // 동일한 타입의 빈이 이미 등록되어 있지 않은 경우에만 이 빈을 생성
-//    @ConditionalOnThreading(Threading.PLATFORM) // PLATFORM 스레드가 사용될 때만 빈이 생성됨
-//    ConcurrentKafkaListenerContainerFactoryConfigurerCustom kafkaListenerContainerFactoryConfigurer() {
-//        return configurer(); // 밑에 configurer() 메소드의 반환값이 최종적으로 Bean으로 등록됨
-//        // 반환값인 ConcurrentKafkaListenerContainerFactoryConfigurer(타입)는 Kafka 리스너 컨테이너를 설정하는 데 사용됨
-//    }
-//
 //    @Bean
 //    @ConditionalOnMissingBean
+//    @ConditionalOnThreading(Threading.PLATFORM)
+//    ConcurrentKafkaListenerContainerFactoryConfigurer kafkaListenerContainerFactoryConfigurer() {
+//        return configurer();
+//    }
+//
+//    @Bean(name = "kafkaListenerContainerFactoryConfigurer")
+//    @ConditionalOnMissingBean
 //    @ConditionalOnThreading(Threading.VIRTUAL)
-//    ConcurrentKafkaListenerContainerFactoryConfigurerCustom kafkaListenerContainerFactoryConfigurerVirtualThreads() {
-//        ConcurrentKafkaListenerContainerFactoryConfigurerCustom configurer = configurer();
+//    ConcurrentKafkaListenerContainerFactoryConfigurer kafkaListenerContainerFactoryConfigurerVirtualThreads() {
+//        ConcurrentKafkaListenerContainerFactoryConfigurer configurer = configurer();
 //        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("kafka-");
 //        executor.setVirtualThreads(true);
 //        configurer.setListenerTaskExecutor(executor);
 //        return configurer;
 //    }
 //
-//    private ConcurrentKafkaListenerContainerFactoryConfigurerCustom configurer() {
-//        ConcurrentKafkaListenerContainerFactoryConfigurerCustom configurer = new ConcurrentKafkaListenerContainerFactoryConfigurerCustom();
-//        // Kafka 관련 설정들을 적용 (배치 처리, 트랜잭션, 오류 처리, 메시지 변환기 등의 설정이 여기서 정의됨)
+//    private ConcurrentKafkaListenerContainerFactoryConfigurer configurer() {
+//        ConcurrentKafkaListenerContainerFactoryConfigurer configurer = new ConcurrentKafkaListenerContainerFactoryConfigurer();
 //        configurer.setKafkaProperties(this.properties);
 //        configurer.setBatchMessageConverter(this.batchMessageConverter);
 //        configurer.setRecordMessageConverter(this.recordMessageConverter);
@@ -118,13 +148,12 @@
 //    }
 //
 //    @Bean
-//    @ConditionalOnMissingBean
+//    @ConditionalOnMissingBean(name = "kafkaListenerContainerFactory")
 //    ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
-//            ConcurrentKafkaListenerContainerFactoryConfigurerCustom configurer,
+//            ConcurrentKafkaListenerContainerFactoryConfigurer configurer,
 //            ObjectProvider<ConsumerFactory<Object, Object>> kafkaConsumerFactory,
 //            ObjectProvider<ContainerCustomizer<Object, Object, ConcurrentMessageListenerContainer<Object, Object>>> kafkaContainerCustomizer,
 //            ObjectProvider<SslBundles> sslBundles) {
-//        // 카프카 리스너 컨테이너 팩토리를 생성하는 클래스, 리스너가 Kafka 메시지를 소비할 때 필요한 설정을 포함함
 //        ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
 //        configurer.configure(factory, kafkaConsumerFactory.getIfAvailable(() -> new DefaultKafkaConsumerFactory<>(
 //                this.properties.buildConsumerProperties(sslBundles.getIfAvailable()))));
@@ -133,10 +162,10 @@
 //    }
 //
 //    @Configuration(proxyBeanMethods = false)
-//    @EnableKafka  // Kafka 리스너를 활성화하기 위해 필요한 설정을 자동으로 추가
-//    @ConditionalOnMissingBean(name = KafkaListenerConfigUtils.KAFKA_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)  // 특정 빈이 없을 경우에만 활성화
+//    @EnableKafka
+//    @ConditionalOnMissingBean(name = KafkaListenerConfigUtils.KAFKA_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
 //    static class EnableKafkaConfiguration {
-//        // 내부 클래스
-//        // Kafka 리스너와 관련된 기본 설정을 추가적으로 등록해줌
+//
 //    }
+//
 //}

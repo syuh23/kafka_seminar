@@ -8,7 +8,6 @@
 //import org.apache.kafka.streams.StreamsBuilder;
 //import org.apache.kafka.streams.StreamsConfig;
 //
-//import org.apache.kafka.streams.kstream.KStream;
 //import org.springframework.beans.factory.InitializingBean;
 //import org.springframework.beans.factory.ObjectProvider;
 //import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,7 +67,7 @@
 //
 //    // StreamsBuilderFactoryBean을 커스터마이징
 //    @Bean
-//    com.example.springkafkapt.custom.KafkaStreamsAnnotationDrivenConfigurationCustom.KafkaStreamsFactoryBeanConfigurer kafkaStreamsFactoryBeanConfigurer(
+//    com.example.springkafkapt.custom.KafkaStreamsAnnotationDrivenConfigurationStudy.KafkaStreamsFactoryBeanConfigurer kafkaStreamsFactoryBeanConfigurer(
 //            @Qualifier(KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_BUILDER_BEAN_NAME) StreamsBuilderFactoryBean factoryBean,
 //            ObjectProvider<StreamsBuilderFactoryBeanCustomizer> customizers) {  // 이 커스터마이저를 통해 팩토리 빈을 유연하게 설정할 수 있음
 //        customizers.orderedStream().forEach((customizer) -> customizer.customize(factoryBean));
