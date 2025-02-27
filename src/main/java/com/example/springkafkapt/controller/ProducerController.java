@@ -14,8 +14,8 @@ public class ProducerController {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @PostMapping("/send")
-    public String sendMessage(@RequestParam String message) {
-        kafkaTemplate.send("test-topic", message);
+    public String sendMessage(@RequestParam String message, @RequestParam String topic) {
+        kafkaTemplate.send(topic, message);
         System.out.println("Sent message: " + message);
 
         return "Sent message : " + message + ",  Successfully";
