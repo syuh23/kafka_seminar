@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@Profile({"consumer", "consumer-two"})
+@Profile("consumer")
 @RequestMapping("/consumer")
 public class ConsumerController {
 
