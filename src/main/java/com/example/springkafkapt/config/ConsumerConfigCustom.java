@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Configuration
-@Profile({"consumer", "consumer-two"})
+@Profile("consumer")
 public class ConsumerConfigCustom {
 
     private final KafkaProperties properties;

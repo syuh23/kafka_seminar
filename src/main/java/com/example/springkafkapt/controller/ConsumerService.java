@@ -15,51 +15,49 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Profile({"consumer", "consumer-two"})
+@Profile("consumer")
 @Service
 public class ConsumerService {
 
     private final ConsumerConfigCustom consumerConfigCustom;
 
-    // 각 동적 컨슈머(KafkaMessageListenerContainer 인스턴스)를 관리하기 위한 Map
     private final Map<String, KafkaMessageListenerContainer<String, String>> consumerContainers = new ConcurrentHashMap<>();
 
-    private final List<String> kafkaMessageList = new ArrayList<>();
-
+    private final Map<String, List<String>> messageMap = new ConcurrentHashMap<>();
 
     public ConsumerService(ConsumerConfigCustom consumerConfigCustom) {
         this.consumerConfigCustom = consumerConfigCustom;
     }
 
+    public void createConsumer(String consumerName, String topic, String groupId) {
+        String clientId = UUID.randomUUID().toString();
+        messageMap.putIfAbsent(consumerName, new ArrayList<>());
 
-    // kafka consumer 생성
-    public void createConsumer(String topic, String groupId) {
-        List<String> messageList = new ArrayList<>();
-        String clientId = UUID.randomUUID().toString();  // 고유한 cliendId 생성, Kafka 브로커와의 통신 및 파티션 할당 시 각 컨슈머를 고유하게 식별하는 데 사용
-        String key = groupId + "_" + topic + "_" + clientId;  // 고유 key값 생성
-
-        // consumer 생성
         ConsumerFactory<String, String> consumerFactory = consumerConfigCustom.createConsumerFactory(groupId, clientId);
+        ContainerProperties containerProps = getContainerProperties(consumerName, topic);
 
+        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(consumerFactory, containerProps);
+        container.start();
+        consumerContainers.put(consumerName, container);
+    }
+
+    private ContainerProperties getContainerProperties(String consumerName, String topic) {
         ContainerProperties containerProps = new ContainerProperties(topic);
 
         containerProps.setMessageListener(new MessageListener<String, String>() {
             @Override
             public void onMessage(ConsumerRecord<String, String> record) {
-                String message = "들어온 메시지 확인 >>>  토픽 : " + record.topic() + ", 메시지 : " + record.value();
+                String message = "들어온 메시지 확인 >>  컨슈머 이름 : " + consumerName + ", 토픽 : " + record.topic() + ", 메시지 : " + record.value();
                 System.out.println(message);
-                messageList.add(record.value());
+                messageMap.get(consumerName).add(record.value());
             }
         });
 
-        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(consumerFactory, containerProps);
-        container.start();
-        consumerContainers.put(key, container);
-        kafkaMessageList.addAll(messageList);
+        return containerProps;
     }
 
-    public List<String> getAllMessages() {
-        return new ArrayList<>(kafkaMessageList);
+    public List<String> getMessage(String consumerName) {
+        return messageMap.getOrDefault(consumerName, new ArrayList<>());
     }
 
 }
